@@ -6,16 +6,19 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-const PORT = 3001;
+// AJUSTE 1: A porta agora é dinâmica (o servidor escolhe) ou 3001 se for no seu PC
+const PORT = process.env.PORT || 3001;
 
 // Inicia a conexão com o WhatsApp
 wppconnect
   .create({
     session: 'sessao-zap',
-    headless: true, // true = não abre navegador; false = abre para você ver
-    logQR: true,    // Mostra o QR Code no terminal
+    headless: true, 
+    logQR: true,
+    // AJUSTE 2: Argumentos obrigatórios para rodar em servidores Linux (Render/AWS)
+    browserArgs: ['--no-sandbox', '--disable-setuid-sandbox'],
     catchQR: (base64Qr, asciiQR) => {
-      console.log(asciiQR); // Garante que o QR Code apareça
+      console.log(asciiQR); 
     },
     statusFind: (statusSession, session) => {
       console.log('Status da Sessão:', statusSession);
@@ -32,7 +35,6 @@ function startServer(client) {
     const { phone, message } = req.body;
 
     try {
-      // Adiciona o código do país se não tiver (ex: assume 55 Brasil) e o sufixo @c.us
       const formattedPhone = phone.includes('@c.us') ? phone : `${phone}@c.us`;
       
       await client.sendText(formattedPhone, message);
@@ -53,7 +55,6 @@ function startServer(client) {
     for (const num of numbers) {
       try {
         await client.sendText(`${num}@c.us`, message);
-        // Espera 5 segundos entre mensagens para não tomar ban
         await new Promise(r => setTimeout(r, 5000)); 
       } catch (e) {
         console.log('Erro ao enviar para ' + num);
@@ -62,6 +63,6 @@ function startServer(client) {
   });
 
   app.listen(PORT, () => {
-    console.log(`🚀 Servidor pronto em http://localhost:${PORT}`);
+    console.log(`🚀 Servidor pronto na porta ${PORT}`);
   });
 }
